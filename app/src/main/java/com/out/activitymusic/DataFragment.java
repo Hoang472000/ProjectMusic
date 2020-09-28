@@ -1,5 +1,9 @@
 package com.out.activitymusic;
 
+import android.widget.Adapter;
+
+import java.util.ArrayList;
+
 public interface DataFragment {
-    public void onclick(Song song);
+    void onclickData(ArrayList mListSong);
 }

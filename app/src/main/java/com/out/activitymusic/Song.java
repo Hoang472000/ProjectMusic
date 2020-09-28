@@ -22,6 +22,7 @@ public class Song implements Serializable {
         Duration = duration;
         Album=album;
     }
+    public Song(){}
 
     public int getID() {
         return ID;

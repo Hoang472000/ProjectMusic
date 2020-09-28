@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <item android:id="@+id/search_item"
+        android:textColor="#ED0303"
         android:title="Search" />
     <item android:id="@+id/upload_item"
         android:title="Upload" />

@@ -4,21 +4,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/picture_big"
-    android:padding="15sp"
     android:background="#FFFF">
 
     <RelativeLayout
         android:id="@+id/op"
         android:layout_width="match_parent"
         android:layout_alignParentTop="true"
+        android:padding="8sp"
         android:layout_height="80dp"
+        android:background="#BFFFFFFF"
         android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/picture_small"
             android:layout_width="85dp"
             android:layout_height="match_parent"
-
             app:srcCompat="@drawable/ic_launcher_foreground" />
 
 
@@ -31,18 +31,19 @@
 
 
         <ImageView
-            android:id="@+id/imageView3"
+            android:id="@+id/music_pop"
             android:layout_width="32dp"
             android:layout_height="50dp"
+            android:visibility="gone"
             android:layout_marginVertical="20sp"
             android:layout_marginLeft="14dp"
             android:layout_marginEnd="5dp"
-            android:layout_toStartOf="@+id/imageView4"
+            android:layout_toStartOf="@+id/mnMedia"
             android:layout_toRightOf="@+id/song1"
             app:srcCompat="@drawable/ic_queue_dark" />
 
         <ImageView
-            android:id="@+id/imageView4"
+            android:id="@+id/mnMedia"
             android:layout_width="40sp"
             android:layout_height="50sp"
             android:layout_alignParentEnd="true"
@@ -53,49 +54,62 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="28dp"
-        android:layout_above="@+id/seekBar"
-        android:layout_marginBottom="1dp"
+        android:layout_height="38dp"
+        android:layout_above="@+id/ll_time"
+
         android:orientation="horizontal">
 
         <ImageView
-            android:id="@+id/imageView5"
+            android:id="@+id/repeat"
             android:layout_width="30dp"
             android:layout_height="match_parent"
-            app:srcCompat="@drawable/ic_repeat_dark" />
+            android:layout_marginLeft="15sp"
+            app:srcCompat="@drawable/ic_repeat_white" />
 
         <ImageView
-            android:id="@+id/imageView6"
+            android:id="@+id/shuffle"
             android:layout_width="30dp"
             android:layout_height="match_parent"
+            android:layout_marginRight="15sp"
             android:layout_alignParentRight="true"
-            app:srcCompat="@drawable/ic_shuffle_dark" />
+            app:srcCompat="@drawable/ic_shuffle_white" />
 
     </RelativeLayout>
 
-    <SeekBar
-        android:id="@+id/seekBar"
-        android:layout_above="@+id/ll_time"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+
 
     <RelativeLayout
         android:id="@+id/ll_time"
         android:layout_width="match_parent"
-        android:layout_height="30dp"
+        android:layout_height="40dp"
         android:layout_above="@+id/ll_bottom"
-        android:layout_marginBottom="-1dp"
+        android:background="#BFFFFFFF"
         android:orientation="horizontal">
 
+        <SeekBar
+            android:id="@+id/seekBar"
+            android:layout_width="match_parent"
+            android:layout_height="10dp"
+            android:progressDrawable="@drawable/progress"
+            android:thumb="@drawable/thumb"
+            />
+
         <TextView
+            android:id="@+id/Time1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/time_1"></TextView>
+            android:layout_below="@+id/seekBar"
+            android:layout_marginLeft="8sp"
+            android:text="@string/time_1">
+
+        </TextView>
 
         <TextView
             android:id="@+id/Time2"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:layout_marginRight="8sp"
+            android:layout_below="@+id/seekBar"
             android:layout_alignParentRight="true"
             android:text="@string/time_2">
         </TextView>
@@ -108,61 +122,64 @@
         android:id="@+id/ll_bottom"
         android:layout_width="match_parent"
         android:layout_height="75dp"
+        android:background="#BFFFFFFF"
+        android:paddingLeft="15sp"
+        android:paddingRight="15sp"
         android:layout_alignParentBottom="true"
         android:orientation="horizontal">
 
         <ImageView
-            android:id="@+id/imageView7"
+            android:id="@+id/like"
             android:layout_width="30dp"
             android:layout_height="match_parent"
             app:srcCompat="@drawable/ic_thumbs_up_default"
             android:contentDescription="TODO" />
 
         <ImageView
-            android:id="@+id/imageView10"
+            android:id="@+id/play_return"
             android:layout_width="30dp"
             android:layout_height="match_parent"
-            android:layout_alignStart="@+id/imageView8"
+            android:layout_alignStart="@+id/play_pause_media"
             android:layout_alignParentTop="true"
             android:layout_alignParentBottom="true"
-            android:layout_marginStart="-56dp"
-            android:layout_marginLeft="80dp"
+            android:layout_marginStart="-35dp"
+            android:layout_marginRight="50dp"
             android:layout_marginTop="0dp"
             android:layout_marginBottom="0dp"
-            android:layout_toRightOf="@+id/imageView7"
+            android:layout_toRightOf="@+id/like"
             app:srcCompat="@drawable/ic_rew_dark" />
 
         <ImageView
-            android:id="@+id/imageView8"
-            android:layout_width="50dp"
+            android:id="@+id/play_pause_media"
+            android:layout_width="50sp"
             android:layout_height="match_parent"
             android:layout_alignParentStart="true"
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
-            android:layout_marginStart="166dp"
-            android:layout_marginEnd="166dp"
+            android:layout_marginStart="155dp"
+            android:layout_marginEnd="155dp"
             android:layout_marginBottom="-5dp"
-            app:srcCompat="@drawable/ic_pause_black_large" />
+            app:srcCompat="@drawable/ic_baseline_pause_circle_filled_24" />
 
         <ImageView
-            android:id="@+id/imageView11"
+            android:id="@+id/play_next"
             android:layout_width="30dp"
             android:layout_height="match_parent"
             android:layout_alignParentTop="true"
             android:layout_alignParentBottom="true"
             android:layout_marginTop="-2dp"
-            android:layout_marginRight="79dp"
+            android:layout_marginLeft="-150dp"
             android:layout_marginBottom="2dp"
-            android:layout_toLeftOf="@+id/imageView9"
+            android:layout_toRightOf="@+id/play_pause_media"
             app:srcCompat="@drawable/ic_fwd_dark" />
 
         <ImageView
-            android:id="@+id/imageView9"
+            android:id="@+id/dislike"
             android:layout_width="30dp"
             android:layout_height="match_parent"
             android:layout_alignParentRight="true"
             app:srcCompat="@drawable/ic_thumbs_down_default" />
 
-        </RelativeLayout>
+    </RelativeLayout>
 
 </RelativeLayout>

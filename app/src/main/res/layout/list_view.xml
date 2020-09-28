@@ -7,6 +7,20 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal">
 
+    <es.claucookie.miniequalizerlibrary.EqualizerView
+        android:id="@+id/equalizer"
+        android:layout_width="30sp"
+        android:layout_height="40sp"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:gravity="center"
+        android:visibility="gone"
+        android:layout_marginLeft="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="MissingConstraints" />
 
     <TextView
         android:id="@+id/STT"
@@ -15,7 +29,8 @@
         android:padding="20sp"
         android:text="@string/STT"
         android:textAlignment="center"
-        android:textSize="18sp"></TextView>
+        android:visibility="visible"
+        android:textSize="16sp"></TextView>
 
         <TextView
             android:id="@+id/music"
