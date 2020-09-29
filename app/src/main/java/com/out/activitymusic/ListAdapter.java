@@ -94,11 +94,16 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> im
 
 //        String mCurrent1=mListSTT.get(position);
         if(position==mPosision) {
-
             holder.mId.setVisibility(View.INVISIBLE);
             holder.mTitle.setTypeface(null, Typeface.BOLD);
             holder.mEqualizer.animateBars();
             holder.mEqualizer.setVisibility(View.VISIBLE);
+        }
+        else {
+            holder.mId.setVisibility(View.VISIBLE);
+            holder.mTitle.setTypeface(null, Typeface.NORMAL);
+       //     holder.mEqualizer.animateBars();
+            holder.mEqualizer.setVisibility(View.INVISIBLE);
         }
     }
 

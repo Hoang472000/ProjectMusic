@@ -1,5 +1,7 @@
 package Service;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -7,22 +9,28 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.media.session.MediaSessionManager;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.widget.RemoteViews;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import com.out.activitymusic.MainActivity;
 import com.out.activitymusic.MediaPlaybackFragment;
+import com.out.activitymusic.R;
 import com.out.activitymusic.Song;
 import com.out.activitymusic.UpdateUI;
 
@@ -36,12 +44,11 @@ public class ServiceMediaPlay extends Service implements MediaPlayer.OnCompletio
         MediaPlayer.OnInfoListener, MediaPlayer.OnBufferingUpdateListener,
 
         AudioManager.OnAudioFocusChangeListener {
+    private static final String NOTIFICATION_CHANNEL_ID = "1";
+    public static final String ACTION_PERVIOUS = "xxx.yyy.zzz.ACTION_PERVIOUS";
+    public static final String ACTION_PLAY = "xxx.yyy.zzz.ACTION_PLAY";
+    public static final String ACTION_NEXT = "xxx.yyy.zzz.ACTION_NEXT";
 
-    public static final String ACTION_PLAY = "com.valdioveliu.valdio.audioplayer.ACTION_PLAY";
-    public static final String ACTION_PAUSE = "com.valdioveliu.valdio.audioplayer.ACTION_PAUSE";
-    public static final String ACTION_PREVIOUS = "com.valdioveliu.valdio.audioplayer.ACTION_PREVIOUS";
-    public static final String ACTION_NEXT = "com.valdioveliu.valdio.audioplayer.ACTION_NEXT";
-    public static final String ACTION_STOP = "com.valdioveliu.valdio.audioplayer.ACTION_STOP";
     UpdateUI mUpdateUI;
     //MediaSession
     private MediaSessionManager mediaSessionManager;
@@ -57,7 +64,6 @@ public class ServiceMediaPlay extends Service implements MediaPlayer.OnCompletio
     private static final String PRIMARY_CHANNEL_ID = "primary_notification_channel";
     private NotificationManager mNotifyManager;
 
-
     public void setListSong(ArrayList<Song> mListSong) {
         this.ListSong = mListSong;
     }
@@ -69,7 +75,9 @@ public class ServiceMediaPlay extends Service implements MediaPlayer.OnCompletio
     }
 
     private int mCurrentPlay;
-    TextView mTitle;
+    String mTitle = "";
+    String mArtistt = "";
+    String mPotoMusic = "";
 
 
     @Override
@@ -80,6 +88,11 @@ public class ServiceMediaPlay extends Service implements MediaPlayer.OnCompletio
         mMediaPlayer.setOnCompletionListener(this);
 //
         mUpdateUI = new UpdateUI(getApplicationContext());
+        mTitle = mUpdateUI.getTitle();
+        mArtistt = mUpdateUI.getArtist();
+
+        mPotoMusic = mUpdateUI.getAlbum();
+        rand= new Random();
 
         super.onCreate();
     }
@@ -91,17 +104,37 @@ public class ServiceMediaPlay extends Service implements MediaPlayer.OnCompletio
             //An audio file is passed to the service through putExtra();
             mediaFile = intent.getExtras().getString("media");
         } catch (NullPointerException e) {
-            // stopSelf();
         }
-
-        //Request audio focus
         if (requestAudioFocus() == false) {
-            //Could not gain focus
-            //stopSelf();
         }
 
         if (mediaFile != null && mediaFile != "")
             initMediaPlayer();
+        if ((mediaPlayer != null) && intent.getAction() != null) {
+            switch (intent.getAction()) {
+                case ACTION_PERVIOUS:
+                    previousMedia();
+                    break;
+
+                case ACTION_NEXT:
+                    nextMedia();
+                    break;
+
+                case ACTION_PLAY:
+                    if (mediaPlayer.isPlaying())
+                        pauseMedia();
+                    else {
+                        try {
+                            playMedia(ListSong.get(possition));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+            }
+        }
+
+
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -273,20 +306,12 @@ public class ServiceMediaPlay extends Service implements MediaPlayer.OnCompletio
 
     }
 
-    public long getCurrentStreamPosition() {
-        if (isPlaying())
-            return mediaPlayer.getCurrentPosition();
-    //    mUpdateUI.UpdateSeekbar(mediaPlayer.getCurrentPosition());
-      //  Log.d("HoangCV", "getCurrentStreamPosition: "+);
-        return 0;
-
+    public int getCurrentStreamPosition() {
+        return mediaPlayer.getCurrentPosition();
     }
 
     public int getDuration() {
-        if (mediaPlayer != null)
-            return mediaPlayer.getDuration();
-
-        return 0;
+        return mediaPlayer.getDuration();
     }
 
     public void seekToPos(int i) {
@@ -336,32 +361,31 @@ public class ServiceMediaPlay extends Service implements MediaPlayer.OnCompletio
     }
 
     public void nextMedia() {
-        rand = new Random();
-        int rtpos=possition;
-        if (repeat == 1) possition=rtpos;
+        int rtpos = possition;
+        if (repeat == 1)
+            possition = rtpos;
         else if (repeat == 0) {
-            possition=rtpos;
-            repeat = -1;
+            rtpos++;
+            if (rtpos > ListSong.size() - 1)
+                rtpos = 0;
+            possition = rtpos;
+
         } else if (shuffle) {
             int newSong = possition;
             while (newSong == possition) {
                 newSong = rand.nextInt(ListSong.size());
             }
             possition = newSong;
-        } else {
-            if (possition >= ListSong.size() - 1) {
-                possition = 0;
-            } else {
-                possition++;
+        } else
+            possition++;
+        if ((possition > ListSong.size() - 1) && (!shuffle) && (repeat == -1)) pauseMedia();
+        else
+            try {
+                playMedia(ListSong.get(possition));
+
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        }
-
-        try {
-            playMedia(ListSong.get(possition));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
     }
 
@@ -369,10 +393,21 @@ public class ServiceMediaPlay extends Service implements MediaPlayer.OnCompletio
         return mPlayer;
     }
 
-    public void returnMedia() {
-        if (possition <= 0) possition = ListSong.size() - 1;
-        else possition--;
-        try {
+    public void previousMedia() {
+        int rtpos = possition;
+        if (shuffle) possition = rand.nextInt(ListSong.size());
+        else if (!shuffle) {
+            if (possition <= 0) possition = ListSong.size() - 1;
+            else possition--;
+        } else if (repeat == 1) possition = rtpos;
+        else if (repeat == 0) {
+            rtpos--;
+            if (rtpos < 0)
+                rtpos = 0;
+            possition = rtpos;
+        }
+        if ((possition < 0) && (!shuffle) && (repeat == -1)) pauseMedia();
+        else try {
             playMedia(ListSong.get(possition));
         } catch (IOException e) {
             e.printStackTrace();
@@ -400,20 +435,31 @@ public class ServiceMediaPlay extends Service implements MediaPlayer.OnCompletio
         mMediaPlayer.start();
         mediaPlayer = mMediaPlayer;
         mCurrentPlay = song.getID();
+        mTitle = song.getTitle();
+        mArtistt = song.getArtist();
+        mPotoMusic = song.getFile();
+        Log.d("HoangCV333", "onCreate: " + mUpdateUI.getAlbum());
+        Log.d("HoangCV333", "onCreate: " + song.getID());
+        Log.d("HoangCV333", "onCreate: " + song.getArtist());
+        //
         //  buildNotification(PlaybackStatus.PAUSED);
         Log.d("HoangCV11", "playMedia: " + mCurrentPlay);
         Log.d("HoangCV11", "playMedia: " + mediaPlayer.getCurrentPosition());
         Log.d("HoangCV11", "playMedia: " + mediaPlayer.getDuration());
+        showNotification(mTitle, mArtistt, mPotoMusic);
         mUpdateUI = new UpdateUI(getApplicationContext());
         mUpdateUI.UpdateTitle(song.getTitle());
         mUpdateUI.UpdateIndex(possition);
         mUpdateUI.UpdateArtist(song.getArtist());
+        mUpdateUI.UpdateFile(song.getFile());
         mUpdateUI.UpdateAlbum(String.valueOf(queryAlbumUri(song.getAlbum())));
+        Log.d("HoangCV333", "onCreate: " + song.getAlbum());
 
+        mUpdateUI.UpdateDuration(mediaPlayer.getDuration());
+        mUpdateUI.UpdateCurrentPossision(mediaPlayer.getCurrentPosition());
+        mUpdateUI.UpdateIsPlaying(mMediaPlayer.isPlaying());
 
         Log.d("HoangCV33", "playMedia: " + String.valueOf(queryAlbumUri(song.getAlbum())));
-
-
 
     }
 
@@ -435,6 +481,7 @@ public class ServiceMediaPlay extends Service implements MediaPlayer.OnCompletio
             mediaPlayer.pause();
             resumePosition = mediaPlayer.getCurrentPosition();
         }
+        showNotification(mTitle, mArtistt, mPotoMusic);
     }
 
     public void resumeMedia() {
@@ -583,5 +630,86 @@ public class ServiceMediaPlay extends Service implements MediaPlayer.OnCompletio
 //        return null;
 //    }
 
+    public void showNotification(String nameSong, String nameArtist, String path) {
+        createNotificationChanel();
+
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
+        Intent previousIntent = new Intent(this, ServiceMediaPlay.class);
+        previousIntent.setAction(ACTION_PERVIOUS);
+        PendingIntent previousPendingIntent = null;
+
+        Intent playIntent = new Intent(this, ServiceMediaPlay.class);
+        playIntent.setAction(ACTION_PLAY);
+        PendingIntent playPendingIntent = null;
+
+        Intent nextIntent = new Intent(this, ServiceMediaPlay.class);
+        nextIntent.setAction(ACTION_NEXT);
+        PendingIntent nextPendingIntent = null;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            previousPendingIntent = PendingIntent.getForegroundService(this, 0, previousIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            playPendingIntent = PendingIntent.getForegroundService(getApplicationContext(), 0, playIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            nextPendingIntent = PendingIntent.getForegroundService(getApplicationContext(), 0, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        }
+
+        RemoteViews mSmallNotification = new RemoteViews(getPackageName(), R.layout.notification_small);
+        RemoteViews mNotification = new RemoteViews(getPackageName(), R.layout.notification);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
+        builder.setSmallIcon(R.drawable.default_cover_art);
+        builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
+        builder.setCustomContentView(mSmallNotification);
+        builder.setCustomBigContentView(mNotification);
+        builder.setContentIntent(pendingIntent);
+
+        mNotification.setTextViewText(R.id.title_ntf, nameSong);
+        mNotification.setTextViewText(R.id.artist_ntf, nameArtist);
+        mNotification.setOnClickPendingIntent(R.id.previous_ntf, previousPendingIntent);
+        mNotification.setOnClickPendingIntent(R.id.next_ntf, nextPendingIntent);
+        mNotification.setOnClickPendingIntent(R.id.play_ntf, playPendingIntent);
+        mNotification.setImageViewResource(R.id.previous_ntf,R.drawable.ic_rew_dark);
+        mNotification.setImageViewResource(R.id.next_ntf,R.drawable.ic_fwd_dark);
+        mNotification.setImageViewResource(R.id.play_ntf, isPlaying() ? R.drawable.ic_baseline_pause_circle_filled_24 : R.drawable.ic_baseline_play_circle_filled_24);
+        if (getAlbumn(path) != null) {
+            mNotification.setImageViewBitmap(R.id.img_ntf, getAlbumn(path));
+        } else {
+            mNotification.setImageViewResource(R.id.img_ntf, R.drawable.default_cover_art);
+        }
+        mSmallNotification.setOnClickPendingIntent(R.id.play_smallntf, playPendingIntent);
+        mSmallNotification.setOnClickPendingIntent(R.id.previous_smallntf, previousPendingIntent);
+        mSmallNotification.setOnClickPendingIntent(R.id.next_smallntf, nextPendingIntent);
+        mSmallNotification.setImageViewResource(R.id.previous_ntf,R.drawable.ic_rew_dark);
+        mSmallNotification.setImageViewResource(R.id.next_ntf,R.drawable.ic_fwd_dark);
+        mSmallNotification.setImageViewResource(R.id.play_smallntf, isPlaying() ? R.drawable.ic_baseline_pause_circle_filled_24 : R.drawable.ic_baseline_play_circle_filled_24);
+        if (getAlbumn(path) != null) {
+            mSmallNotification.setImageViewBitmap(R.id.image, getAlbumn(path));
+        } else {
+            mSmallNotification.setImageViewResource(R.id.image, R.drawable.default_cover_art);
+        }
+        startForeground(1, builder.build());
+    }
+
+    public void createNotificationChanel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel notificationChannel = new NotificationChannel(
+                    NOTIFICATION_CHANNEL_ID,
+                    "mUSIC SERVICE CHANNEL",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            notificationChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(notificationChannel);
+
+        }
+    }
+
+    public Bitmap getAlbumn(String path) {
+        MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
+        metadataRetriever.setDataSource(path);
+        byte[] data = metadataRetriever.getEmbeddedPicture();
+        return data == null ? null : BitmapFactory.decodeByteArray(data, 0, data.length);
+    }
 
 }

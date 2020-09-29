@@ -122,7 +122,13 @@ public class AllSongsFragment extends Fragment implements LoaderManager.LoaderCa
         title.setText(UpdateUI.getTitle());
         artist.setText(UpdateUI.getArtist());
         img.setImageURI(Uri.parse(UpdateUI.getAlbum()));
-        UpdateUI.UpdateSeekbar(song);
+        final Song updateSong= new Song(UpdateUI.getIndex(),UpdateUI.getTitle(),UpdateUI.getFile(),UpdateUI.getAlbum(),UpdateUI.getArtist(),String.valueOf(UpdateUI.getDuration()));
+        if(serviceMediaPlay!=null)
+            song=updateSong;
+        Log.d("HoangCV444", "onCreateView: "+updateSong);
+
+
+
 
         index=UpdateUI.getIndex();
         Log.d("HoangCV33", "onCreateView: "+UpdateUI.getAlbum());
@@ -130,13 +136,11 @@ public class AllSongsFragment extends Fragment implements LoaderManager.LoaderCa
         mLinearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                int pos;
-//                if(index==song.getID()-1) pos=index;
-//                else pos=song.getID()-1;
-                displayMediaFragment.onclick(song);
-                //mMusicPop.setVisibility(View.VISIBLE);
+                displayMediaFragment.onclick(updateSong);
+
             }
         });
+
         onClickPause();
 
         return mInflater;

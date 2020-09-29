@@ -22,7 +22,7 @@ public class Song implements Serializable {
         Duration = duration;
         Album=album;
     }
-    public Song(){}
+    public Song(int index, String title, String file, String album, String artist, int duration){}
 
     public int getID() {
         return ID;

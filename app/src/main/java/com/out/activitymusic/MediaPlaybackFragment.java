@@ -7,9 +7,9 @@ import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 
@@ -21,9 +21,9 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import androidx.annotation.LongDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
 import android.view.MenuItem;
@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 import Service.ServiceMediaPlay;
@@ -47,7 +48,7 @@ public class MediaPlaybackFragment extends Fragment implements PopupMenu.OnMenuI
     private ImageView mLike, mDisLike;
     private ImageView mPlayReturn, mPlayNext, mShuffle, mRepeat;
     private SeekBar mSeekBar;
-    private UpdateSeekBarThread updateSeekBarThread;
+
 
     MediaPlayer mediaPlayer;
     private ArrayList<Song> mListSong;
@@ -131,9 +132,14 @@ public class MediaPlaybackFragment extends Fragment implements PopupMenu.OnMenuI
             }
         });
         mUpdateUI = new UpdateUI(getContext());
-        //    tv.setText(mUpdateUI.getTitle());
         shuffler = mUpdateUI.getShuffle();
         repeat = mUpdateUI.getRepeat();
+        if(mUpdateUI.getIsPlaying()){
+            tv.setText(mUpdateUI.getTitle());
+            img.setImageURI(Uri.parse(mUpdateUI.getAlbum()));
+            imgBig.setBackground(setImgBig(mUpdateUI.getAlbum()));
+            time2.setText(getDurationTime1(String.valueOf(mUpdateUI.getDuration())));
+        }
 
         if (shuffler) {
             mShuffle.setImageResource(R.drawable.ic_play_shuffle_orange);
@@ -157,7 +163,7 @@ public class MediaPlaybackFragment extends Fragment implements PopupMenu.OnMenuI
         }
         Popmenu();
 //        mSeekBar.setMax(serviceMediaPlay.getDuration());
-        mSeekBar.setMax(serviceMediaPlay.getDuration());
+        mSeekBar.setMax(mUpdateUI.getDuration()/1000);
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -177,6 +183,10 @@ public class MediaPlaybackFragment extends Fragment implements PopupMenu.OnMenuI
                 serviceMediaPlay.getmMediaPlayer().seekTo(seekBar.getProgress());
             }
         });
+        if(serviceMediaPlay!=null ) {
+           // mSeekBar.setProgress(serviceMediaPlay.getCurrentStreamPosition() / 1000);//////////////////////////******************************************************8
+            updateTime();
+        }
 
         return view;
     }
@@ -236,8 +246,7 @@ public class MediaPlaybackFragment extends Fragment implements PopupMenu.OnMenuI
 
     }
 
-    public void setImgBig(Bundle bundle) {
-        String pathName = bundle.getString("song2");
+    public Drawable setImgBig(String pathName) {
         Uri uri = Uri.parse(pathName);
         Drawable yourDrawable = null;
         try {
@@ -247,7 +256,7 @@ public class MediaPlaybackFragment extends Fragment implements PopupMenu.OnMenuI
             yourDrawable = getResources().getDrawable(R.drawable.ic_launcher_background);
             e.printStackTrace();
         }
-        imgBig.setBackground(yourDrawable);
+       return yourDrawable;
     }
 
     private String getDurationTime1(String str) {
@@ -310,14 +319,12 @@ public class MediaPlaybackFragment extends Fragment implements PopupMenu.OnMenuI
         switch (view.getId()) {
             case R.id.like:
                 Toast.makeText(getActivity(), "liked", Toast.LENGTH_SHORT).show();
-                Log.d("HoangCV123", "onClick: " + mListSong);
+                mLike.setImageResource(R.drawable.ic_thumbs_up_selected);
                 break;
             case R.id.play_return: {
                 Toast.makeText(getActivity(), "return", Toast.LENGTH_SHORT).show();
-                serviceMediaPlay.returnMedia();
-
+                serviceMediaPlay.previousMedia();
                 getText(mListSong.get(serviceMediaPlay.getPossision()));
-
                 time1.setText(getDurationTime1("0"));
                 break;
 
@@ -325,11 +332,10 @@ public class MediaPlaybackFragment extends Fragment implements PopupMenu.OnMenuI
             case R.id.play_pause_media: {
                 if (serviceMediaPlay.isPlaying()) {
                     serviceMediaPlay.pauseMedia();
-                    mPlayPauseMedia.setImageResource(R.drawable.ic_baseline_pause_circle_filled_24);
-
+                    mPlayPauseMedia.setImageResource(R.drawable.ic_baseline_play_circle_filled_24);
                 } else {
                     serviceMediaPlay.resumeMedia();
-                    mPlayPauseMedia.setImageResource(R.drawable.ic_baseline_play_circle_filled_24);
+                    mPlayPauseMedia.setImageResource(R.drawable.ic_baseline_pause_circle_filled_24);
                 }
                 break;
             }
@@ -343,6 +349,7 @@ public class MediaPlaybackFragment extends Fragment implements PopupMenu.OnMenuI
             }
             case R.id.dislike:
                 Toast.makeText(getActivity(), "disliked", Toast.LENGTH_SHORT).show();
+                mDisLike.setImageResource(R.drawable.ic_thumbs_down_selected);
                 break;
             case R.id.shuffle: {
                 //   Log.d("HoangCV111", "onClick: " + shuffler);
@@ -381,60 +388,86 @@ public class MediaPlaybackFragment extends Fragment implements PopupMenu.OnMenuI
 
     }
 
-
-    public class UpdateSeekBarThread extends Thread {
-        private Handler handler;
-
-        @Override
-        public void run() {
-            super.run();
-            Looper.prepare();
-            handler = new Handler();
-            Looper.loop();
-        }
-
-        public void updateSeekBar() {
-            Log.d("HoangCV7", "updateSeekBar: ");
-            if (serviceMediaPlay != null) {
-                handler.post(new Runnable() {
+    public void updateTime() {
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
+            @Override
+            public void run() {
+                SimpleDateFormat formatTime = new SimpleDateFormat("mm:ss");
+                time1.setText(formatTime.format(serviceMediaPlay.getCurrentStreamPosition()));
+                Log.d("HoangCV444", "run: "+serviceMediaPlay.getCurrentStreamPosition());
+                mSeekBar.setProgress(serviceMediaPlay.getCurrentStreamPosition());
+                serviceMediaPlay.getmMediaPlayer().setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                     @Override
-                    public void run() {
-                        Log.d("TAG", "runis: " + serviceMediaPlay.isPlaying());
-                        if (serviceMediaPlay.isPlaying()) {
-                            while (serviceMediaPlay.getPlayer() != null) {
-                                try {
-                                    long current = -1;
-                                    try {
-                                        current = serviceMediaPlay.getCurrentStreamPosition();
-                                    } catch (IllegalStateException e) {
-                                        e.printStackTrace();
-                                    }
-                                    if (getActivity() != null) {
-                                        final long finalCurrent = current;
-                                        getActivity().runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                mSeekBar.setMax((int) (serviceMediaPlay.getDuration() / 1000));
-                                                mSeekBar.setProgress((int) (finalCurrent / 1000));
-
-                                            }
-                                        });
-                                    }
-                                    Thread.sleep(1000);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
+                    public void onCompletion(MediaPlayer mediaPlayer) {
+                        try {
+                            serviceMediaPlay.onCompletionSong();
+            //                updateUI();
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     }
                 });
+                handler.postDelayed(this, 500);
             }
-        }
-
-        public void exit() {
-            handler.getLooper().quit();
-        }
+        }, 100);
     }
+
+//
+//    public class UpdateSeekBarThread extends Thread {
+//        private Handler handler;
+//
+//        @Override
+//        public void run() {
+//            super.run();
+//            Looper.prepare();
+//            handler = new Handler();
+//            Looper.loop();
+//        }
+//
+//        public void updateSeekBar() {
+//            Log.d("HoangCV7", "updateSeekBar: ");
+//            if (serviceMediaPlay != null) {
+//                handler.post(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        Log.d("TAG", "runis: " + serviceMediaPlay.isPlaying());
+//                        if (serviceMediaPlay.isPlaying()) {
+//                            while (serviceMediaPlay.getPlayer() != null) {
+//                                try {
+//                                    long current = -1;
+//                                    try {
+//                                        current = serviceMediaPlay.getCurrentStreamPosition();
+//                                    } catch (IllegalStateException e) {
+//                                        e.printStackTrace();
+//                                    }
+//                                    if (getActivity() != null) {
+//                                        final long finalCurrent = current;
+//                                        getActivity().runOnUiThread(new Runnable() {
+//                                            @Override
+//                                            public void run() {
+//                                                mSeekBar.setMax((int) (serviceMediaPlay.getDuration() / 1000));
+//                                                mSeekBar.setProgress((int) (finalCurrent / 1000));
+//
+//                                            }
+//                                        });
+//                                    }
+//                                    Thread.sleep(1000);
+//                                } catch (InterruptedException e) {
+//                                    e.printStackTrace();
+//                                }
+//                            }
+//                        }
+//                    }
+//                });
+//            }
+//        }
+//
+//        public void exit() {
+//            handler.getLooper().quit();
+//        }
+//    }
 
 
    /* @Override
